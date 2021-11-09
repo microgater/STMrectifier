@@ -63,7 +63,7 @@ static void MX_ADC3_Init(void);
 static void MX_TIM1_Init(void);
 static void MX_TIM8_Init(void);
 /* USER CODE BEGIN PFP */
-
+void setPWM(TIM_HandleTypeDef timer, uint32_t channel, uint16_t period, uint16_t pulse) ;
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
@@ -106,7 +106,10 @@ int main(void)
   MX_TIM1_Init();
   MX_TIM8_Init();
   /* USER CODE BEGIN 2 */
-
+  HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_1);
+  HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_2);
+  HAL_TIM_PWM_Start(&htim8, TIM_CHANNEL_1);
+  HAL_TIM_PWM_Start(&htim8, TIM_CHANNEL_3);
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -114,7 +117,11 @@ int main(void)
   while (1)
   {
     /* USER CODE END WHILE */
-
+	  for(int i = 0; i < 256; i++)
+	  {
+		  setPWM(htim1, TIM_CHANNEL_1, 255, i);
+		  HAL_Delay(10);
+	  }
     /* USER CODE BEGIN 3 */
   }
   /* USER CODE END 3 */
@@ -369,10 +376,6 @@ static void MX_TIM1_Init(void)
   {
     Error_Handler();
   }
-  if (HAL_TIM_OC_Init(&htim1) != HAL_OK)
-  {
-    Error_Handler();
-  }
   sMasterConfig.MasterOutputTrigger = TIM_TRGO_RESET;
   sMasterConfig.MasterOutputTrigger2 = TIM_TRGO2_RESET;
   sMasterConfig.MasterSlaveMode = TIM_MASTERSLAVEMODE_DISABLE;
@@ -391,8 +394,7 @@ static void MX_TIM1_Init(void)
   {
     Error_Handler();
   }
-  sConfigOC.OCMode = TIM_OCMODE_TIMING;
-  if (HAL_TIM_OC_ConfigChannel(&htim1, &sConfigOC, TIM_CHANNEL_2) != HAL_OK)
+  if (HAL_TIM_PWM_ConfigChannel(&htim1, &sConfigOC, TIM_CHANNEL_2) != HAL_OK)
   {
     Error_Handler();
   }
@@ -637,7 +639,19 @@ static void MX_GPIO_Init(void)
 }
 
 /* USER CODE BEGIN 4 */
-
+void setPWM(TIM_HandleTypeDef timer, uint32_t channel, uint16_t period, uint16_t pulse)
+{
+ HAL_TIM_PWM_Stop(&timer, channel); // stop generation of pwm
+ TIM_OC_InitTypeDef sConfigOC;
+ timer.Init.Period = period; // set the period duration
+ HAL_TIM_PWM_Init(&timer); // reinititialise with new period value
+ sConfigOC.OCMode = TIM_OCMODE_PWM1;
+ sConfigOC.Pulse = pulse; // set the pulse duration
+ sConfigOC.OCPolarity = TIM_OCPOLARITY_HIGH;
+ sConfigOC.OCFastMode = TIM_OCFAST_DISABLE;
+ HAL_TIM_PWM_ConfigChannel(&timer, &sConfigOC, channel);
+ HAL_TIM_PWM_Start(&timer, channel); // start pwm generation
+}
 /* USER CODE END 4 */
 
 /**
