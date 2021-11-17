@@ -32,9 +32,9 @@
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
-#define DT_0_5 108
-#define DT_2_0 214
-#define DT_4_0 246
+#define DT_0_5 54
+#define DT_2_0 172
+#define DT_4_0 214
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -81,7 +81,9 @@ void setPWM(TIM_HandleTypeDef timer, uint32_t channel, uint16_t period, uint16_t
 int main(void)
 {
   /* USER CODE BEGIN 1 */
-
+  uint8_t flag_USER_Btn_press = 1;
+  uint32_t time_USER_Btn_press = 0;
+  uint8_t dt_state = 0;
   /* USER CODE END 1 */
 
   /* MCU Configuration--------------------------------------------------------*/
@@ -117,14 +119,45 @@ int main(void)
   HAL_TIMEx_PWMN_Start(&htim8, TIM_CHANNEL_1);
   HAL_TIM_PWM_Start(&htim8, TIM_CHANNEL_3);
   HAL_TIMEx_PWMN_Start(&htim8, TIM_CHANNEL_3);
+
+  TIM1->BDTR &= 0xFFFFFF00;
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-	  TIM1->BDTR &= 0xFFF0;
+    if (HAL_GPIO_ReadPin(USER_Btn_GPIO_Port, USER_Btn_Pin) == GPIO_PIN_SET
+	&& flag_USER_Btn_press)
+    {
+      flag_USER_Btn_press = 0;
+
+      // действие на нажатие
+      TIM1->BDTR &= 0xFFFFFF00;
+      switch (++dt_state)
+      {
+	case 0:
+	  break;
+	case 1:
 	  TIM1->BDTR |= DT_0_5;
+	  break;
+	case 2:
+	  TIM1->BDTR |= DT_2_0;
+	  break;
+	case 3:
+	  TIM1->BDTR |= DT_4_0;
+	  break;
+      }
+      if (dt_state == 4)
+	dt_state = 0;
+
+      time_USER_Btn_press = HAL_GetTick();
+    }
+
+    if (!flag_USER_Btn_press && (HAL_GetTick() - time_USER_Btn_press) > 300)
+    {
+      flag_USER_Btn_press = 1;
+    }
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
