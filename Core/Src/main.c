@@ -71,7 +71,15 @@ void setPWM(TIM_HandleTypeDef timer, uint32_t channel, uint16_t period, uint16_t
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
-
+/*void HAL_TIM_PWM_PulseFinishedCallback(TIM_HandleTypeDef *htim)
+{
+  if (htim->Instance == TIM1) // check if the interrupt comes from TIM1
+  {
+    HAL_GPIO_TogglePin(VT1_4_GPIO_Port, VT1_4_Pin);
+    HAL_GPIO_TogglePin(VT2_5_GPIO_Port, VT2_5_Pin);
+    HAL_GPIO_TogglePin(VT3_6_GPIO_Port, VT3_6_Pin);
+  }
+}*/
 /* USER CODE END 0 */
 
 /**
@@ -111,8 +119,8 @@ int main(void)
   MX_TIM1_Init();
   MX_TIM8_Init();
   /* USER CODE BEGIN 2 */
-  HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_1);
-  HAL_TIMEx_PWMN_Start(&htim1, TIM_CHANNEL_1);
+  HAL_TIM_PWM_Start_IT(&htim1, TIM_CHANNEL_1);
+  HAL_TIMEx_PWMN_Start_IT(&htim1, TIM_CHANNEL_1);
   HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_2);
   HAL_TIMEx_PWMN_Start(&htim1, TIM_CHANNEL_2);
   HAL_TIM_PWM_Start(&htim8, TIM_CHANNEL_1);
@@ -121,6 +129,7 @@ int main(void)
   HAL_TIMEx_PWMN_Start(&htim8, TIM_CHANNEL_3);
 
   TIM1->BDTR &= 0xFFFFFF00;
+  TIM8->BDTR &= 0xFFFFFF00;
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -134,18 +143,22 @@ int main(void)
 
       // действие на нажатие
       TIM1->BDTR &= 0xFFFFFF00;
+      TIM8->BDTR &= 0xFFFFFF00;
       switch (++dt_state)
       {
 	case 0:
 	  break;
 	case 1:
 	  TIM1->BDTR |= DT_0_5;
+	  TIM8->BDTR |= DT_0_5;
 	  break;
 	case 2:
 	  TIM1->BDTR |= DT_2_0;
+	  TIM8->BDTR |= DT_2_0;
 	  break;
 	case 3:
 	  TIM1->BDTR |= DT_4_0;
+	  TIM8->BDTR |= DT_4_0;
 	  break;
       }
       if (dt_state == 4)
@@ -612,7 +625,7 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Pin = VT1_4_Pin|VT2_5_Pin|VT3_6_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
-  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_VERY_HIGH;
   HAL_GPIO_Init(GPIOF, &GPIO_InitStruct);
 
   /*Configure GPIO pins : RMII_MDC_Pin RMII_RXD0_Pin RMII_RXD1_Pin */
